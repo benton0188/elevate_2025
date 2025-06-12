@@ -1,0 +1,46 @@
+rule Composite_CredDumpRule_DefenseEvasionProcess_UDM_Compliant { // New name
+  meta:
+    author = "Cline (Adapted by AI)"
+    description = "Detects a credential dumping rule alert followed by a defense evasion process launch on the same host within 1 hour."
+    severity = "CRITICAL"
+    priority = "HIGH"
+
+  events:
+    // Event 1: Credential Dumping via Rule Detection
+    $cred_dump_rule.metadata.product_event_type = "RULE_DETECTION" and // Assumes you add this to UDM metadata
+    (
+      $cred_dump_rule.security_result.rule_name = "NTDS.dit Extraction via Windows Volume Shadow Copy" or
+      $cred_dump_rule.security_result.rule_name = "Reg Save Hklm Sam Ss Dat" or
+      $cred_dump_rule.security_result.rule_name = "Reg Save Hklm System Sy.Dat"
+    ) and
+    // **** CORRECTED UDM PATH FOR HOSTNAME ****
+    $cred_dump_rule.principal.asset.hostname = $hostname 
+
+    // Event 2: Defense Evasion via Process Launch
+    $defense_evasion_process.metadata.event_type = "PROCESS_LAUNCH" and
+    // **** CORRECTED UDM PATH FOR COMMAND LINE (target.process for launched process) ****
+    re.regex($defense_evasion_process.target.process.command_line, `rundll32\.exe`) and
+    // **** CORRECTED UDM PATH FOR HOSTNAME (principal for context of launch) ****
+    $defense_evasion_process.principal.hostname = $hostname // This was okay for the lean PROCESS_LAUNCH
+
+  match:
+    $hostname over 1h // Using 1 hour as per description
+
+  outcome:
+    $risk_score = 65
+    $combined_risk_score = max($cred_dump_rule.security_result.risk_score) + 20 // Using max removed the +30 from inside max()
+
+    $credential_dumping_rule_name = array_distinct($cred_dump_rule.security_result.rule_name)
+    // **** CORRECTED UDM PATHS FOR EVENT 2 PROCESS INFO ****
+    $evasion_command_line = array_distinct($defense_evasion_process.target.process.command_line)
+    $evasion_process_path = array_distinct($defense_evasion_process.target.process.file.full_path)
+
+    // For MITRE Tactic, if you only have it in 'additional' in UDM for event 1:
+    // $mitre_tactic_cred_dump = array_distinct($cred_dump_rule.additional.mitre_tactic_from_source)
+    // Or if you use security_result.category:
+    $mitre_tactic_cred_dump = array_distinct($cred_dump_rule.security_result.category)
+
+
+  condition:
+    $cred_dump_rule and $defense_evasion_process
+}

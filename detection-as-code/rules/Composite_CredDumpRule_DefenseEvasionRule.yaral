@@ -1,0 +1,31 @@
+rule Composite_CredDumpRule_DefenseEvasionRule {
+  meta:
+    author = "Cline"
+    description = "Detects a credential dumping rule alert followed by a defense evasion rule alert on the same host within 1 hour."
+    severity = "CRITICAL"
+    priority = "HIGH"
+
+  events:
+    // Event 1: Credential Dumping via Rule Detection
+    $cred_dump_rule.metadata.product_event_type = "RULE_DETECTION" and
+    (
+      $cred_dump_rule.security_result.rule_name = "NTDS.dit Extraction via Windows Volume Shadow Copy" or
+      $cred_dump_rule.security_result.rule_name = "Reg Save Hklm Sam Ss Dat" or
+      $cred_dump_rule.security_result.rule_name = "Reg Save Hklm System Sy.Dat"
+    ) and
+    $cred_dump_rule.principal.hostname = $hostname // Link to match variable
+
+    // Event 2: Defense Evasion via Rule Detection
+    $defense_evasion_rule.metadata.product_event_type = "RULE_DETECTION" and
+    $defense_evasion_rule.security_result.rule_name = "Rundll32 execute long filename." and
+    $defense_evasion_rule.principal.hostname = $hostname // Link to match variable
+
+  match:
+    // Define hostname as the key to join events over the time window
+    $hostname over 12h
+
+  condition:
+    // Require both events for the same hostname within the match window
+    $cred_dump_rule and $defense_evasion_rule
+}
+

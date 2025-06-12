@@ -1,0 +1,68 @@
+
+rule i_methodology_t1204_002_suspicious_filewrite_to_sap_directory {
+  internal_meta:
+    author = "uppercase"
+    uc_author = "ssedotto"
+    strategy = "Detects filewrites to SAP directories potentially associated with CVE-2025-31324. File types observed have been .jsp,.class and .java files."
+    reference = "https://reliaquest.com/blog/threat-spotlight-reliaquest-uncovers-vulnerability-behind-sap-netweaver-compromise/"
+    type = "customer_alert"
+    data_source = "EDR"
+    platform = "Windows"
+    slot_usage = "0.0010"
+    internal_source = "mdnt_hunt"
+    rule_id = "a163df8d-c9e6-446e-b390-cc4010315922"
+  customer_meta:
+    rule_name = "Suspicious Filewrites to SAP Directory"
+    description = "Detects suspicious filewrite events to SAP directories that have been associated with CVE-2025-31324 exploitation."
+    reference = "https://nvd.nist.gov/vuln/detail/CVE-2025-31324"
+    severity = "High"
+    tactic = "TA0002"
+    technique = "T1204.002"
+  events:
+    (
+      $e.metadata.event_type = "FILE_CREATION" or
+      $e.metadata.event_type = "FILE_MODIFICATION" or
+      $e.metadata.event_type = "FILE_MOVE"
+    )
+    (
+      $e.target.file.full_path = /servlet_jsp\\irj\\(root\\)?[^\\]+\./ nocase or
+      $e.target.file.full_path = /servlet_jsp\/irj\/(root\/)?[^\/]+\./ nocase or
+      $e.target.file.full_path = /servlet_jsp\\irj\\(work\\(sync\\)?)?[^\\]+\./ nocase or
+      $e.target.file.full_path = /servlet_jsp\/irj\/(work\/(sync\/)?)?[^\/]+\./ nocase
+    )
+    $e.principal.process.file.full_path != /\/openv\/netbackup\/bin\/bpbkar/ nocase
+  outcome:
+    $risk_score = 0
+    $vendor_name = $e.metadata.vendor_name
+    $product_name = $e.metadata.product_name
+    $victim_uid = $e.principal.asset.asset_id
+    $victim_name = $e.principal.asset.hostname
+    $victim_netid = array($e.principal.ip)
+    $adversary_uid = $e.principal.user.userid
+    $adversary_name = $e.principal.user.user_display_name
+    $adversary_netid = $e.principal.user.windows_sid
+    $tmp1 = max(
+      // First, any action is not block or not unknown, return success (2).
+      if($e.security_result.action != "BLOCK" and $e.security_result.action != "UNKNOWN_ACTION", 2)
+    )
+    $tmp2 = max(
+      // If any action is blocked, return failed (1).
+      if($e.security_result.action = "BLOCK", 1)
+    )
+    $result = arrays.index_to_str(
+      // 0 means that neither matched (attempted)
+      // 1 means that blocked with no success (failed)
+      // 2 means succeeded with no blocks (succeeded)
+      // 3 means succeeded with some blocked (succeeded)
+      strings.split("attempted,failed,succeeded,succeeded"), $tmp1 + $tmp2
+    )
+    $result_time = $e.metadata.event_timestamp.seconds
+    $event_count = 1
+    $principal_process_file_full_path = $e.principal.process.file.full_path
+    $target_process_command_line = $e.target.process.command_line 
+    $principal_process_command_line = $e.principal.process.command_line 
+    $target_process_file_full_path = $e.target.process.file.full_path
+    $hostname = $e.principal.hostname
+  condition:
+    $e
+}

@@ -1,0 +1,37 @@
+Compromised_Credential_Emails_V2:
+  columns:
+  - column_index: 0
+    column_type: STRING
+    key_column: null
+    mapped_column_path: null
+    original_column: email_address
+  - column_index: 1
+    column_type: STRING
+    key_column: null
+    mapped_column_path: null
+    original_column: compromise_source
+  - column_index: 2
+    column_type: STRING
+    key_column: null
+    mapped_column_path: null
+    original_column: compromise_date
+  - column_index: 3
+    column_type: STRING
+    key_column: null
+    mapped_column_path: null
+    original_column: severity
+  - column_index: 4
+    column_type: STRING
+    key_column: null
+    mapped_column_path: null
+    original_column: notes
+  create_time: '2025-05-19T12:39:27.968482Z'
+  description: A constantly updated list of compromised emails
+  resource_name: projects/secops-424109/locations/us/instances/6ee828cb-ac3e-4521-a80d-dbfb7a6b1c1a/dataTables/Compromised_Credential_Emails_V2
+  row_time_to_live: null
+  rule_associations_count: 2
+  rules:
+  - projects/1042165586272/locations/us/instances/6ee828cb-ac3e-4521-a80d-dbfb7a6b1c1a/rules/ru_a1be75de-06c4-4bf2-8b19-6c5ca8002899
+  - projects/1042165586272/locations/us/instances/6ee828cb-ac3e-4521-a80d-dbfb7a6b1c1a/rules/ru_b2048706-1fc3-4ae3-961b-cfa6da4eca32
+  update_time: '2025-06-04T07:58:18.757299Z'
+  uuid: 24e5149a93c44d5088a18d9bb14cbc1e

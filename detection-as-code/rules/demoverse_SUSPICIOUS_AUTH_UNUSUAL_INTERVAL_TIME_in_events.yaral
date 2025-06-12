@@ -1,0 +1,96 @@
+rule demoverse_SUSPICIOUS_AUTH_UNUSUAL_INTERVAL_TIME_in_events { // Changed rule name for clarity of purpose
+
+    meta:
+        author = "@cmmartin"
+        description = "RULE FOR TESTING: Detects suspicious authentication. Fires ONLY if the user is found in the Compromised_Credential_Emails_V2 data table. The data table acts as a mandatory filter."
+        severity = "LOW"
+        priority = "LOW"
+
+    // NOTICE: No @prefetch here!
+    // When you use %DataTableName.ColumnName directly in the events or condition section,
+    // Chronicle implicitly handles the lookup. You do NOT need @prefetch.
+
+    events:
+        $e1.metadata.log_type = "WORKSPACE_ACTIVITY"
+        $e1.metadata.event_type = "USER_LOGIN"
+        $e1.metadata.product_event_type = "login_success"
+        
+        // Match variables
+        // $user must be consistently used for all user email assignments and joins
+        $user = $e1.security_result.about.email
+        $e1_lat = $e1.principal.location.region_coordinates.latitude
+        $e1_long = $e1.principal.location.region_coordinates.longitude
+
+        // ensure consistent event sequencing, i.e., $e1 is before $e2
+        $e1.metadata.event_timestamp.seconds < $e2.metadata.event_timestamp.seconds
+        // check the $e1 and $e2 coordinates represent different locations
+        $e1_lat != $e2_lat
+        $e1_long != $e2_long
+
+        $e2.metadata.log_type = "WORKSPACE_ACTIVITY"
+        $e2.metadata.event_type = "USER_LOGIN"    
+        $e2.metadata.product_event_type = "login_success"
+        // Ensure $e2 also belongs to the same user
+        $user = $e2.security_result.about.email
+        $e2_lat = $e2.principal.location.region_coordinates.latitude
+        $e2_long = $e2.principal.location.region_coordinates.longitude
+
+        // --- Data table comparison in events section ---
+        // This line makes the data table presence a MANDATORY filter for the rule to fire.
+        // The rule will ONLY fire if $user's email exists in the email_address column of the data table.
+        $user = %Compromised_Credential_Emails_V2.email_address // <--- This is the key line
+    
+    match:
+        $user,
+        $e1_lat, 
+        $e1_long, 
+        $e2_lat, 
+        $e2_long 
+        over 4h
+    
+    outcome:
+        // calculate the interval between first and last event, in seconds
+        $duration_hours = cast.as_int(
+            min(
+                ($e2.metadata.event_timestamp.seconds - $e1.metadata.event_timestamp.seconds) 
+                / 3600
+            )
+        )
+
+        // calculate distance between login events, and convert results into kilometers
+        $distance_kilometers = math.ceil(
+            max(
+                math.geo_distance(
+                    $e1_long,
+                    $e1_lat,
+                    $e2_long,
+                    $e2_lat
+                )
+            ) 
+            / 1000 
+        )
+
+        // calculate the speed in KPH
+        $kph = math.ceil($distance_kilometers / $duration_hours)
+
+        // // generate base risk_score based on KPH, i.e., speed over distance travelled
+        $base_risk_score = (
+            if($kph >= 100 and $kph <= 249, 35) +
+            if($kph > 250 and $kph <= 449, 50) +
+            if($kph > 500 and $kph <= 999, 75) +
+            if($kph >= 1000, 90)
+        ) 
+
+        // Add bonus: Since the rule only fires if the user is found in the data table,
+        // we can directly add the bonus here, because the condition already guarantees a match.
+        $compromised_credential_bonus = 9
+
+        // Add the bonus to the base risk score
+        $risk_score = $base_risk_score + $compromised_credential_bonus
+
+        // change this according to your requirements
+        $risk_score_threshold = 75
+    
+    condition:
+        $e1 and $e2 // $risk_score >= $risk_score_threshold (uncomment if you want to filter detections by score)
+}

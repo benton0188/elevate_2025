@@ -1,0 +1,17 @@
+
+rule ip_address_match {
+  meta:
+    author = "Google SecOps Gemini"
+    description = "Detect events where the target IP address matches a list of suspicious IPs"
+    severity = "High"
+  events:
+    $e.target.ip = "45.141.84.223" OR $e.target.ip = "143.92.58.97" OR $e.target.ip = "47.96.116.171" OR $e.target.ip = "188.114.96.0" OR $e.target.ip = "193.161.193.99"
+  outcome:
+    $event_type = $e.metadata.event_type
+    $log_type = $e.metadata.log_type
+    $target_ip = array($e.target.ip)
+    $principal_hostname = $e.principal.hostname
+    $principal_user = $e.principal.user.userid
+  condition:
+    $e
+}

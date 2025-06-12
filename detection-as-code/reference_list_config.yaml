@@ -1,0 +1,14 @@
+Domain_Blocklist:
+  description: domains
+  resource_name: projects/secops-424109/locations/us/instances/6ee828cb-ac3e-4521-a80d-dbfb7a6b1c1a/referenceLists/Domain_Blocklist
+  revision_create_time: '2025-06-01T23:12:42.440431Z'
+  rule_associations_count: null
+  rules: null
+  syntax_type: REFERENCE_LIST_SYNTAX_TYPE_PLAIN_TEXT_STRING
+IP_Blocklist:
+  description: IP
+  resource_name: projects/secops-424109/locations/us/instances/6ee828cb-ac3e-4521-a80d-dbfb7a6b1c1a/referenceLists/IP_Blocklist
+  revision_create_time: '2025-06-01T23:13:17.151007Z'
+  rule_associations_count: null
+  rules: null
+  syntax_type: REFERENCE_LIST_SYNTAX_TYPE_PLAIN_TEXT_STRING

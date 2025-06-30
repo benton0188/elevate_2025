@@ -1,0 +1,21 @@
+rule detect_admin_account_usage {
+
+  meta:
+    author = "gbenton"
+    description = "Detects usage of admin account TIM.SMITH_ADMIN in any event"
+    severity = "high"
+
+  events:
+    // Match any UDM event where the specified admin user is the principal actor.
+    // To make this more efficient, you could filter for specific event types,
+    // for example: $e.metadata.event_type = "USER_LOGIN"
+    $e.principal.user.userid = "TIM.SMITH_ADMIN" nocase
+
+  outcome:
+    // The risk_score can be adjusted based on the severity of the event.
+    $risk_score = 50
+
+  condition:
+    // The condition section now simply needs to state the event variable to trigger the detection.
+    $e
+}

@@ -838,6 +838,18 @@ demoverse_workspace_MalwareDownload:
   revision_id: v_1723208216_343087000
   run_frequency: LIVE
   type: SINGLE_EVENT
+detect_admin_account_usage:
+  alerting: true
+  archive_time: null
+  archived: false
+  create_time: '2025-06-30T21:27:43.458527Z'
+  enabled: true
+  id: ru_fe866ab6-a926-41b6-b68a-cfbd3ed9640e
+  resource_name: projects/1042165586272/locations/us/instances/6ee828cb-ac3e-4521-a80d-dbfb7a6b1c1a/rules/ru_fe866ab6-a926-41b6-b68a-cfbd3ed9640e
+  revision_create_time: '2025-06-30T21:44:50.733967Z'
+  revision_id: v_1751319890_733967000
+  run_frequency: LIVE
+  type: SINGLE_EVENT
 dns_query_to_recently_created_domain:
   alerting: false
   archive_time: null

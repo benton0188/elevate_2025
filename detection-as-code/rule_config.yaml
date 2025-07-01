@@ -839,11 +839,11 @@ demoverse_workspace_MalwareDownload:
   run_frequency: LIVE
   type: SINGLE_EVENT
 detect_admin_account_usage:
-  alerting: true
+  alerting: false
   archive_time: null
   archived: false
   create_time: '2025-06-30T21:27:43.458527Z'
-  enabled: true
+  enabled: false
   id: ru_fe866ab6-a926-41b6-b68a-cfbd3ed9640e
   resource_name: projects/1042165586272/locations/us/instances/6ee828cb-ac3e-4521-a80d-dbfb7a6b1c1a/rules/ru_fe866ab6-a926-41b6-b68a-cfbd3ed9640e
   revision_create_time: '2025-06-30T21:44:50.733967Z'
